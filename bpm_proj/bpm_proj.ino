@@ -1,51 +1,36 @@
-#include<Adafruit_SSD1306.h> 
-#include<Adafruit_GFX.h> 
-#include<Wire.h> 
-
-#define OLED_WIDTH 128 
-#define OLED_HEIGHT 64 
-#define OLED_RESET -1
+#include<LiquidCrystal.h>
 
 
-int pulsePin = A0;                 // Pulse Sensor purple wire connected to analog pin A0
-int blinkPin = 13;                // pin to blink led at each beat
 
-// Volatile Variables, used in the interrupt service routine!
-volatile int BPM;                   // int that holds raw Analog in 0. updated every 2mS
-volatile int Signal;                // holds the incoming raw data
-volatile int IBI = 600;             // int that holds the time interval between beats! Must be seeded! 
-volatile boolean Pulse = false;     // "True" when User's live heartbeat is detected. "False" when not a "live beat". 
-volatile boolean QS = false;        // becomes true when Arduoino finds a beat.
+LiquidCrystal lcd(2,3,4,5,6,7);
+int pulsePin = A0;                 
+int blinkPin = 13;                
 
-static boolean serialVisual = true;   // Set to 'false' by Default.  Re-set to 'true' to see Arduino Serial Monitor ASCII Visual Pulse 
+volatile int BPM;                   
+volatile int Signal;                
+volatile int IBI = 600;             
+volatile boolean Pulse = false;     
+volatile boolean QS = false;        
 
-volatile int rate[10];                      // array to hold last ten IBI values
-volatile unsigned long sampleCounter = 0;          // used to determine pulse timing
-volatile unsigned long lastBeatTime = 0;           // used to find IBI
-volatile int P = 512;                      // used to find peak in pulse wave, seeded
-volatile int T = 512;                     // used to find trough in pulse wave, seeded
-volatile int thresh = 525;                // used to find instant moment of heart beat, seeded
-volatile int amp = 100;                   // used to hold amplitude of pulse waveform, seeded
-volatile boolean firstBeat = true;        // used to seed rate array so we startup with reasonable BPM
-volatile boolean secondBeat = false;      // used to seed rate array so we startup with reasonable BPM
+static boolean serialVisual = true;  
+
+volatile int rate[10];                     
+volatile unsigned long sampleCounter = 0;         
+volatile unsigned long lastBeatTime = 0;          
+volatile int P = 512;                      
+volatile int T = 512;                     
+volatile int thresh = 525;                
+volatile int amp = 100;                   
+volatile boolean firstBeat = true;        
+volatile boolean secondBeat = false;      
 
 
-Adafruit_SSD1306 display(OLED_WIDTH,OLED_HEIGHT,&Wire,OLED_RESET);
 
 void setup()
 {
-  pinMode(blinkPin,OUTPUT);         // pin that will blink to your heartbeat!
-  Serial.begin(115200);             // we agree to talk fast!
-  interruptSetup();                 // sets up to read Pulse Sensor signal every 2mS 
-  display.begin(SSD1306_SWITCHCAPVCC,0x3C);
-  display.display();
-  display.clearDisplay();
-  display.setTextSize(1);
-  display.setTextColor(SSD1306_WHITE);
-  display.setCursor(60,32);
-  display.println(F("MEASURING HEART RATE"));
-  display.display();
-  display.clearDisplay();
+  pinMode(blinkPin,OUTPUT);        
+  Serial.begin(9600);             
+  interruptSetup();
 }
 
 
@@ -64,14 +49,14 @@ void loop()
 
 void interruptSetup()
 {     
-  TCCR2A = 0x02;     // DISABLE PWM ON DIGITAL PINS 3 AND 11, AND GO INTO CTC MODE
-  TCCR2B = 0x06;     // DON'T FORCE COMPARE, 256 PRESCALER 
+  TCCR2A = 0x02;    
+  TCCR2B = 0x06;    
   OCR2A = 0X7C;      // SET THE TOP OF THE COUNT TO 124 FOR 500Hz SAMPLE RATE
   TIMSK2 = 0x02;     // ENABLE INTERRUPT ON MATCH BETWEEN TIMER2 AND OCR2A
   sei();             // MAKE SURE GLOBAL INTERRUPTS ARE ENABLED      
 } 
 
-void serialOutput()
+void serialOutput(){
  if (serialVisual == true)
   {  
      arduinoSerialMonitorVisual('-', Signal);   // goes to function that makes Serial Monitor Visualizer
@@ -86,9 +71,9 @@ void serialOutputWhenBeatHappens()
 {    
  if (serialVisual == true) //  Code to Make the Serial Monitor Visualizer Work
    {            
-     /* Serial.print(" Heart-Beat Found ");  //ASCII Art Madness
+    Serial.print(" Heart-Beat Found ");  //ASCII Art Madness
      Serial.print("BPM: ");
-     Serial.println(BPM); */
+     Serial.println(BPM); 
 
      display.setCursor(63,32);
      display.println("BPM: ");
